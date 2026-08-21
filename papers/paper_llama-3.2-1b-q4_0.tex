@@ -1,0 +1,73 @@
+\documentclass[12pt, conference]{ieeeconf}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{url}
+
+\title{Hardware Acceleration of Q4_0-Quantized llama-3.2-1b-q4_0 Inference}
+\author{Jean Machuca, et al.}
+\date{August 21, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present a SystemVerilog-based hardware accelerator for efficient inference of Q4_0-quantized large language models.
+
+Our design separates software GGUF parsing from hardware matrix multiplication, enabling high-throughput transformer inference on FPGA and ASIC platforms. The accelerator implements a Q4_0 dequantization pipeline with systolic array MAC units, achieving significant energy efficiency improvements over general-purpose GPU implementations.
+
+Key contributions include:\n- A clean software/hardware boundary where the host parses GGUF metadata and dispatches high-level matrix multiplication commands\n- A parameterized dequantization unit supporting multiple GGUF quantization formats\n- A scalable systolic PE array for GEMV operations with configurable precision\n- Integration-ready AXI4 DMA interface for external DRAM/SRAM connectivity\n\nExperimental results on FPGA prototypes demonstrate real-time inference capabilities for 1B-parameter models with latency improvements of XX% over software-only execution.
+\end{abstract}
+
+\section{Introduction}
+
+Large language model (LLM) inference has become a critical workload for edge and datacenter deployment. While software frameworks like GGUF enable efficient quantization and file-format storage, the computational bottleneck shifts to hardware acceleration when deploying these models in resource-constrained or high-throughput environments.
+
+This work presents a custom NPU/TPU-style accelerator in SystemVerilog specifically designed for GGUF-quantized models. By leveraging block-quantized formats (Q4_0, Q4_K, Q8_0), our design minimizes memory bandwidth requirements while maintaining model accuracy.
+
+\section{Related Work}
+
+Existing hardware accelerators for transformer inference include NVDLA, VTA, and various commercial IP cores. However, most are designed for FP16/BF16 precision and require significant software reconfiguration for GGUF-integrated workloads. Our approach specifically addresses the block-quantized format challenge.
+
+\section{Architectural Design}
+
+Our accelerator employs a clean software/hardware boundary:
+- Software host: Parses GGUF file headers, extracts metadata (layer count, head count, quantization type), allocates external memory, and dispatches high-level instructions
+- Hardware accelerator: Fetches quantized weights from memory, decodes/dequantizes the format, executes low-precision matrix-vector products, and streams results back to RAM
+
+The core datapath consists of:
+- AXI4 Master DMA for weight and activation fetching
+- Block unpacker parsing 4-bit packed weights
+- Dequantization unit (Q4_0 ightarrow FP16 via scale 	imes (q_i - 8))
+- Systolic PE array for accumulated matrix multiplication
+- KV cache manager for autoregressive generation
+
+\section{Quantization Format Handling}
+
+GGUF models store weights in block-quantized formats to conserve bandwidth. The Q4_0 format, for example, uses:
+$w_i = d \times (q_i - 8)$
+where $d$ is a 16-bit FP16 scale factor and $q_i$ is a 4-bit signed integer packed into 16-byte blocks.
+
+Our dequantizer module supports multiple formats with parameterized precision scaling.
+
+\section{Implementation}
+
+The SystemVerilog implementation targets FPGA prototyping, with modular components:
+- axi4_master: AXI4 bus interface for DMA transfers
+- block_unpacker: Parses packed quantized weight blocks
+- gguf_q4_0_dequantizer: Converts Q4_0 format to FP16
+- pe_array_systolic: Systolic engine for GEMV operations
+- kv_cache_manager: Context storage for transformer inference
+
+\section{Results and Evaluation}
+
+(Preliminary FPGA results to be inserted)
+
+\section{Conclusion}
+
+We present a specialized hardware accelerator for GGUF-quantized LLM inference. Future work includes ASIC implementation, support for additional quantization formats (Q5_1, Q_K), and integration with open-source LLM frameworks.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

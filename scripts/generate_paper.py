@@ -40,16 +40,8 @@ def extract_model_metadata(model_name):
             "quant_format": "Q4_0",
             "params_b": 1.0,
         },
-        "phi-2-q4_0": {
-            "layers": 24,
-            "hidden_size": 512,
-            "num_heads": 8,
-            "head_dim": 64,
-            "quant_format": "Q4_0",
-            "params_b": 0.6b,
-        },
     }
-    return metadata.get(model_name, metadata["phi-2-q4_0"])
+    return metadata.get(model_name, metadata["llama-3.2-1b-q4_0"])
 
 
 def generate_verilog_documentation(model_info, arch_type):
@@ -76,6 +68,7 @@ def generate_verilog_documentation(model_info, arch_type):
 - Throughput: TBD (FPGA prototype measurement)
 - LUT utilization: TBD (INT8 vs FP16 implementation)
 - Memory bandwidth: {model_info['hidden_size']} × {model_info['num_heads']} × {model_info['layers']} weights
+
 """
     return doc
 
@@ -84,95 +77,96 @@ def generate_latex_paper(model_name, model_info, arch_type, output_dir):
     """Generate a complete arxiv-ready LaTeX paper."""
     
     # Determine paper title based on model and architecture
-    title = f"Hardware Acceleration of {model_info['quant_format']}-Quantized {model_name} Inference"
+    title = "Hardware Acceleration of " + model_info['quant_format'] + "-Quantized " + model_name + " Inference"
     
     authors = "Jean Machuca, et al."
     
-    abstract = f"""We present a SystemVerilog-based hardware accelerator for efficient inference of {model_info['quant_format']}-quantized large language models. 
-
-Our design separates software GGUF parsing from hardware matrix multiplication, enabling high-throughput transformer inference on FPGA and ASIC platforms. The accelerator implements a Q{model_info['quant_format'][2]}_{model_info['quant_format'][-1]} dequantization pipeline with systolic array MAC units, achieving significant energy efficiency improvements over general-purpose GPU implementations.
-
-Key contributions include:
-- A clean software/hardware boundary where the host parses GGUF metadata and dispatches high-level matrix multiplication commands
-- A parameterized dequantization unit supporting multiple GGUF quantization formats
-- A scalable systolic PE array for GEMV operations with configurable precision
-- Integration-ready AXI4 DMA interface for external DRAM/SRAM connectivity
-
-Experimental results on FPGA prototypes demonstrate real-time inference capabilities for 1B-parameter models with latency improvements of XX% over software-only execution."""
+    abstract = "We present a SystemVerilog-based hardware accelerator for efficient inference of " + model_info['quant_format'] + "-quantized large language models.\n\n" \
+               "Our design separates software GGUF parsing from hardware matrix multiplication, enabling high-throughput transformer inference on FPGA and ASIC platforms. The accelerator implements a Q" + model_info['quant_format'][1] + "_" + model_info['quant_format'][-1] + " dequantization pipeline with systolic array MAC units, achieving significant energy efficiency improvements over general-purpose GPU implementations.\n\n" \
+               "Key contributions include:\\n" \
+               "- A clean software/hardware boundary where the host parses GGUF metadata and dispatches high-level matrix multiplication commands\\n" \
+               "- A parameterized dequantization unit supporting multiple GGUF quantization formats\\n" \
+               "- A scalable systolic PE array for GEMV operations with configurable precision\\n" \
+               "- Integration-ready AXI4 DMA interface for external DRAM/SRAM connectivity\\n\\n" \
+               "Experimental results on FPGA prototypes demonstrate real-time inference capabilities for 1B-parameter models with latency improvements of XX% over software-only execution."
     
-    latex_content = f"""\\documentclass[12pt, conference]{ieeeconf}
-\\usepackage{graphicx}
-\\usepackage{amsmath}
-\\usepackage{url}
-
-\\title{{{title}}}
-\\author{{{authors}}}
-\\date{{\\today}}
-
-\\begin{document}
-
-\\maketitle
-
-\\begin{abstract}
-{abstract}
-\\end{abstract}
-
-\\section{Introduction}
-
-Large language model (LLM) inference has become a critical workload for edge and datacenter deployment. While software frameworks like GGUF enable efficient quantization and file-format storage, the computational bottleneck shifts to hardware acceleration when deploying these models in resource-constrained or high-throughput environments.
-
-This work presents a custom NPU/TPU-style accelerator in SystemVerilog specifically designed for GGUF-quantized models. By leveraging block-quantized formats (Q4_0, Q4_K, Q8_0), our design minimizes memory bandwidth requirements while maintaining model accuracy.
-
-\\section{Related Work}
-
-Existing hardware accelerators for transformer inference include NVDLA, VTA, and various commercial IP cores. However, most are designed for FP16/BF16 precision and require significant software reconfiguration for GGUF-integrated workloads. Our approach specifically addresses the block-quantized format challenge.
-
-\\section{Architectural Design}
-
-Our accelerator employs a clean software/hardware boundary:
-- **Software host**: Parses GGUF file headers, extracts metadata (layer count, head count, quantization type), allocates external memory, and dispatches high-level instructions
-- **Hardware accelerator**: Fetches quantized weights from memory, decodes/dequantizes the format, executes low-precision matrix-vector products, and streams results back to RAM
-
-The core datapath consists of:
-- AXI4 Master DMA for weight and activation fetching
-- Block unpacker parsing 4-bit packed weights
-- Dequantization unit (Q4_0 → FP16 via scale × (q_i − 8))
-- Systolic PE array for accumulated matrix multiplication
-- KV cache manager for autoregressive generation
-
-\\section{Quantization Format Handling}
-
-GGUF models store weights in block-quantized formats to conserve bandwidth. The Q4_0 format, for example, uses:
-$$w_i = d \\times (q_i - 8)$$
-where $d$ is a 16-bit FP16 scale factor and $q_i$ is a 4-bit signed integer packed into 16-byte blocks.
-
-Our dequantizer module supports multiple formats with parameterized precision scaling.
-
-\\section{Implementation}
-
-The SystemVerilog implementation targets FPGA prototyping, with modular components:
-- axi4_master: AXI4 bus interface for DMA transfers
-- block_unpacker: Parses packed quantized weight blocks
-- gguf_q4_0_dequantizer: Converts Q4_0 format to FP16
-- pe_array_systolic: Systolic engine for GEMV operations
-- kv_cache_manager: Context storage for transformer inference
-
-\\section{Results and Evaluation}
-
-(Preliminary FPGA results to be inserted)
-
-\\section{Conclusion}
-
-We present a specialized hardware accelerator for GGUF-quantized LLM inference. Future work includes ASIC implementation, support for additional quantization formats (Q5_1, Q_K), and integration with open-source LLM frameworks.
-
-\\bibliographystyle{IEEEtran}
-\\bibliography{references}
-
-\\end{document}"""
+    # Build LaTeX content using string concatenation to avoid f-string/LaTeX backslash conflicts
+    latex_parts = []
+    latex_parts.append(r"\documentclass[12pt, conference]{ieeeconf}")
+    latex_parts.append(r"\usepackage{graphicx}")
+    latex_parts.append(r"\usepackage{amsmath}")
+    latex_parts.append(r"\usepackage{url}")
+    latex_parts.append("")
+    latex_parts.append(r"\title{" + title + "}")
+    latex_parts.append(r"\author{" + authors + "}")
+    latex_parts.append(r"\date{" + datetime.date.today().strftime("%B %d, %Y") + "}")
+    latex_parts.append("")
+    latex_parts.append(r"\begin{document}")
+    latex_parts.append("")
+    latex_parts.append(r"\maketitle")
+    latex_parts.append("")
+    latex_parts.append(r"\begin{abstract}")
+    latex_parts.append(abstract)
+    latex_parts.append(r"\end{abstract}")
+    latex_parts.append("")
+    latex_parts.append(r"\section{Introduction}")
+    latex_parts.append("")
+    latex_parts.append("Large language model (LLM) inference has become a critical workload for edge and datacenter deployment. While software frameworks like GGUF enable efficient quantization and file-format storage, the computational bottleneck shifts to hardware acceleration when deploying these models in resource-constrained or high-throughput environments.")
+    latex_parts.append("")
+    latex_parts.append("This work presents a custom NPU/TPU-style accelerator in SystemVerilog specifically designed for GGUF-quantized models. By leveraging block-quantized formats (Q4_0, Q4_K, Q8_0), our design minimizes memory bandwidth requirements while maintaining model accuracy.")
+    latex_parts.append("")
+    latex_parts.append(r"\section{Related Work}")
+    latex_parts.append("")
+    latex_parts.append("Existing hardware accelerators for transformer inference include NVDLA, VTA, and various commercial IP cores. However, most are designed for FP16/BF16 precision and require significant software reconfiguration for GGUF-integrated workloads. Our approach specifically addresses the block-quantized format challenge.")
+    latex_parts.append("")
+    latex_parts.append(r"\section{Architectural Design}")
+    latex_parts.append("")
+    latex_parts.append("Our accelerator employs a clean software/hardware boundary:")
+    latex_parts.append("- Software host: Parses GGUF file headers, extracts metadata (layer count, head count, quantization type), allocates external memory, and dispatches high-level instructions")
+    latex_parts.append("- Hardware accelerator: Fetches quantized weights from memory, decodes/dequantizes the format, executes low-precision matrix-vector products, and streams results back to RAM")
+    latex_parts.append("")
+    latex_parts.append("The core datapath consists of:")
+    latex_parts.append("- AXI4 Master DMA for weight and activation fetching")
+    latex_parts.append("- Block unpacker parsing 4-bit packed weights")
+    latex_parts.append("- Dequantization unit (Q4_0 \rightarrow FP16 via scale \times (q_i - 8))")
+    latex_parts.append("- Systolic PE array for accumulated matrix multiplication")
+    latex_parts.append("- KV cache manager for autoregressive generation")
+    latex_parts.append("")
+    latex_parts.append(r"\section{Quantization Format Handling}")
+    latex_parts.append("")
+    latex_parts.append("GGUF models store weights in block-quantized formats to conserve bandwidth. The Q4_0 format, for example, uses:")
+    latex_parts.append("$w_i = d \\times (q_i - 8)$")
+    latex_parts.append("where $d$ is a 16-bit FP16 scale factor and $q_i$ is a 4-bit signed integer packed into 16-byte blocks.")
+    latex_parts.append("")
+    latex_parts.append("Our dequantizer module supports multiple formats with parameterized precision scaling.")
+    latex_parts.append("")
+    latex_parts.append(r"\section{Implementation}")
+    latex_parts.append("")
+    latex_parts.append("The SystemVerilog implementation targets FPGA prototyping, with modular components:")
+    latex_parts.append("- axi4_master: AXI4 bus interface for DMA transfers")
+    latex_parts.append("- block_unpacker: Parses packed quantized weight blocks")
+    latex_parts.append("- gguf_q4_0_dequantizer: Converts Q4_0 format to FP16")
+    latex_parts.append("- pe_array_systolic: Systolic engine for GEMV operations")
+    latex_parts.append("- kv_cache_manager: Context storage for transformer inference")
+    latex_parts.append("")
+    latex_parts.append(r"\section{Results and Evaluation}")
+    latex_parts.append("")
+    latex_parts.append("(Preliminary FPGA results to be inserted)")
+    latex_parts.append("")
+    latex_parts.append(r"\section{Conclusion}")
+    latex_parts.append("")
+    latex_parts.append("We present a specialized hardware accelerator for GGUF-quantized LLM inference. Future work includes ASIC implementation, support for additional quantization formats (Q5_1, Q_K), and integration with open-source LLM frameworks.")
+    latex_parts.append("")
+    latex_parts.append(r"\bibliographystyle{IEEEtran}")
+    latex_parts.append(r"\bibliography{references}")
+    latex_parts.append("")
+    latex_parts.append(r"\end{document}")
+    
+    latex_content = "\n".join(latex_parts)
     
     # Write LaTeX file
     os.makedirs(output_dir, exist_ok=True)
-    latex_path = Path(output_dir) / f"paper_{model_name}.tex"
+    latex_path = Path(output_dir) / ("paper_" + model_name + ".tex")
     with open(latex_path, 'w') as f:
         f.write(latex_content)
     
@@ -183,21 +177,19 @@ def generate_zenodo_submission(paper_path, model_info, arch_type):
     """Generate zenodo submission package."""
     
     submission = {
-        "title": f"Hardware Accelerator for {model_info['quant_format']}-Quantized LLM Inference",
+        "title": "Hardware Accelerator for " + model_info['quant_format'] + "-Quantized LLM Inference",
         "creators": [
             {"name": "Jean Machuca", "affiliation": "AI Chip Research Group"}
         ],
         "keywords": ["SystemVerilog", "NPU", "GGUF", "Quantization", "Hardware Accelerator"],
         "publication_date": datetime.datetime.now().strftime("%Y-%m-%d"),
-        "description": f"""Hardware accelerator implementation for {model_info['quant_format']}-quantized large language model inference. 
-
-The system implements a SystemVerilog-based NPU/TPU architecture with:
-- Block-quantized weight decomposition (Q{model_info['quant_format'][2]}_{model_info['quant_format'][-1]})
-- AXI4 DMA interface for external memory connectivity
-- Systolic array MAC pipeline for GEMV operations
-- KV cache management for transformer autoregressive generation
-
-The design cleanly separates software GGUF parsing from hardware computation, enabling efficient deployment on FPGA and ASIC platforms."""
+        "description": "Hardware accelerator implementation for " + model_info['quant_format'] + "-quantized large language model inference.\\n\\n" \
+                       "The system implements a SystemVerilog-based NPU/TPU architecture with:\\n" \
+                       "- Block-quantized weight decomposition (Q" + model_info['quant_format'][1] + "_" + model_info['quant_format'][-1] + "))\\n" \
+                       "- AXI4 DMA interface for external memory connectivity\\n" \
+                       "- Systolic array MAC pipeline for GEMV operations\\n" \
+                       "- KV cache management for transformer autoregressive generation\\n\\n" \
+                       "The design cleanly separates software GGUF parsing from hardware computation, enabling efficient deployment on FPGA and ASIC platforms."
     }
     
     return submission
@@ -206,59 +198,72 @@ The design cleanly separates software GGUF parsing from hardware computation, en
 def main():
     args = parse_args()
     
-    print(f"[Pipeline] Generating paper for: {args.model}")
-    print(f"[Pipeline] Quantization format: {args.quant}")
-    print(f"[Pipeline] Target architecture: {args.arch}")
+    print("[Pipeline] Generating paper for: " + args.model)
+    print("[Pipeline] Quantization format: " + args.quant)
+    print("[Pipeline] Target architecture: " + args.arch)
     
     # Step 1: Extract model metadata
     model_info = extract_model_metadata(args.model)
-    print(f"[Pipeline] Model info: {model_info}")
+    print("[Pipeline] Model info: " + str(model_info))
     
     # Step 2: Generate Verilog documentation section
     verilog_doc = generate_verilog_documentation(model_info, args.arch)
-    print(f"[Pipeline] Generated Verilog documentation section")
+    print("[Pipeline] Generated Verilog documentation section")
     
     # Step 3: Generate LaTeX paper
     latex_path = generate_latex_paper(args.model, model_info, args.arch, args.output)
-    print(f"[Pipeline] LaTeX paper generated: {latex_path}")
+    print("[Pipeline] LaTeX paper generated: " + latex_path)
     
     # Step 4: Generate zenodo submission package
     zenodo_package = generate_zenodo_submission(latex_path, model_info, args.arch)
-    print(f"[Pipeline] Zenodo submission package prepared")
+    print("[Pipeline] Zenodo submission package prepared")
     
     # Step 5: Create summary report
-    report = f"""Research Report: AI Chip Accelerator for GGUF Inference
-==================================================
-
-Model: {args.model}
-Quantization: {args.quant}
-Architecture: {args.arch}
-Generated: {datetime.datetime.now().isoformat()}
-
-Key Components:
-- GGUF metadata parsing (software host)
-- Q{args.quant[2]}_{args.quant[-1]} dequantization pipeline
-- Systolic PE array for GEMV operations
-- AXI4 DMA memory interface
-- KV cache management for transformer inference
-
-Output Files:
-- LaTeX paper: {latex_path}
-- Verilog documentation: designs/ directory
-- Zenodo submission: ready for upload
-
-Next Steps:
-1. FPGA prototyping and performance measurement
-2. Additional quantization format support (Q4_K, Q5_1, etc.)
-- ASIC implementation feasibility study
-"""
+    report = "Research Report: AI Chip Accelerator for GGUF Inference" + \
+             "==================================================" + \
+             "\n\n" + \
+             "Model: " + args.model + \
+             "\n" + \
+             "Quantization: " + args.quant + \
+             "\n" + \
+             "Architecture: " + args.arch + \
+             "\n" + \
+             "Generated: " + datetime.datetime.now().isoformat() + \
+             "\n\n" + \
+             "Key Components:" + \
+             "\n" + \
+             "- GGUF metadata parsing (software host)" + \
+             "\n" + \
+             "- Q" + args.quant[1] + "_" + args.quant[-1] + " dequantization pipeline" + \
+             "\n" + \
+             "- Systolic PE array for GEMV operations" + \
+             "\n" + \
+             "- AXI4 DMA memory interface" + \
+             "\n" + \
+             "- KV cache management for transformer inference" + \
+             "\n\n" + \
+             "Output Files:" + \
+             "\n" + \
+             "- LaTeX paper: " + latex_path + \
+             "\n" + \
+             "- Verilog documentation: designs/ directory" + \
+             "\n" + \
+             "- Zenodo submission: ready for upload" + \
+             "\n\n" + \
+             "Next Steps:" + \
+             "\n" + \
+             "1. FPGA prototyping and performance measurement" + \
+             "\n" + \
+             "2. Additional quantization format support (Q4_K, Q5_1, etc.)" + \
+             "\n" + \
+             "- ASIC implementation feasibility study"
     
-    report_path = Path(args.output) / f"report_{args.model}.md"
+    report_path = Path(args.output) / ("report_" + args.model + ".md")
     with open(report_path, 'w') as f:
         f.write(report)
-    print(f"[Pipeline] Report generated: {report_path}")
+    print("[Pipeline] Report generated: " + str(report_path))
     
-    print(f"\n[Pipeline] Complete! Papers and artifacts generated in {args.output}/")
+    print("\\n[Pipeline] Complete! Papers and artifacts generated in " + args.output + "/")
 
 
 if __name__ == "__main__":
