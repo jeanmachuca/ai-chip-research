@@ -4,7 +4,7 @@ Research Report: AI Chip Accelerator for GGUF Inference
 Model: llama-3.2-1b-q4_0
 Quantization: Q4_0
 Architecture: FPGA
-Generated: 2026-08-21T07:42:59.683470
+Generated: 2026-08-21T07:46:01.790711
 
 Key Components:
 - GGUF metadata parsing (software host)

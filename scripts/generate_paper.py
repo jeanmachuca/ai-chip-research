@@ -143,7 +143,7 @@ Our design separates software GGUF parsing from hardware matrix multiplication, 
 
 Key contributions include:
 - A clean software/hardware boundary where the host parses GGUF metadata and dispatches high-level matrix multiplication commands
-- A dequantization unit implementing the Q4_0 scale-offset scheme (w = d x (q - 8)) in FP16, structured for extension to other GGUF block formats
+- A dequantization unit implementing the Q4\_0 scale-offset scheme (w = d x (q - 8)) in FP16, structured for extension to other GGUF block formats
 - A MAC pipeline for GEMV operations with a parameterized bus-width block unpacker
 - An AXI4 master interface skeleton for external DRAM/SRAM connectivity
 
