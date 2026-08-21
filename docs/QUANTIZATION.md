@@ -7,15 +7,19 @@ GGUF models store weights in **block-quantized formats** (e.g., `Q4_0`, `Q4_K`, 
 A `Q4_0` block stores 32 weights using:
 
 1. **Scale Factor ($d$):** A 16-bit floating-point value (`FP16`).
-2. **Quantized Weights ($q_i$):** 32 4-bit signed integers (nibbles) packed into 16 bytes.
+2. **Quantized Weights ($q_i$):** 32 4-bit values (nibbles), stored unsigned and interpreted as signed via the $-8$ offset.
 
 The actual mathematical value of weight $i$ is calculated as:
 
 $$w_i = d \times (q_i - 8)$$
 
-### Dequantizer Implementation Pattern
+### Implemented Dequantizer
 
-Your SystemVerilog hardware must contain a dequantizer module that unpacks raw bytes into numeric values before feeder logic sends them to Multiply-Accumulate (MAC) units.
+The implemented module is [`src/verilog/gguf_q4_0_dequantizer.sv`](../src/verilog/gguf_q4_0_dequantizer.sv). It decodes the FP16 scale, multiplies by the signed offset $q_i - 8$, and re-normalizes to FP16 (truncating rounding; subnormal scales flush to zero).
+
+### Reference Integration Pattern
+
+The following pattern shows how the dequantizer composes with integer-to-FP16 conversion and an FP16 multiplier when those units are available as IP. These submodules are integration points, not part of this repository:
 
 ```systemverilog
 module gguf_q4_0_dequantizer (

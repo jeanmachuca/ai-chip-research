@@ -7,12 +7,12 @@ This repository contains the research and SystemVerilog implementation of a hard
 ```
 ai-chip-research/
 ├── docs/                  # Research documentation and architecture guides
-├── designs/               # SystemVerilog source files and FPGA prototypes
-├── src/                   # Verilog source code (axi4_master, pe_array, etc.)
+├── designs/               # Generated per-model hardware documentation
+├── src/verilog/           # SystemVerilog source code (axi4_master, pe_array, etc.)
 ├── scripts/               # Python pipelines for paper generation
 ├── papers/                # Generated LaTeX papers and reports
 ├── submissions/           # Zenodo/arxiv submission packages
-└── tex/                   # LaTeX source files and bibliographies
+└── tex/                   # LaTeX class files and bibliographies
 ```
 
 ## Key Research Areas
@@ -38,7 +38,7 @@ ai-chip-research/
 ### FPGA Prototyping (Phase 1)
 
 1. Use the embedded ARM core on Zynq/Kria to parse GGUF files via C program
-2. Stream raw blocks to SystemVerilog IP via AXI-Stream
+2. Stream raw blocks to SystemVerilog IP via AXI4 (AXI4-Lite/AXI4-Stream variants planned)
 3. Test with small quantized models (Llama-3.2-1B Q4_0 or Q8_0)
 
 ### Build and Run
@@ -56,7 +56,7 @@ python3 scripts/generate_paper.py --model llama-3.2-1b-q4_0 --quant Q4_0 --arch 
 
 ## References
 
-- GGUF Format Specification: https://gguf.spec.
+- GGUF Format Specification: https://github.com/ggml-org/ggml/blob/master/docs/gguf.md
 - NVDLA: NVIDIA Deep Learning Accelerator
 - VTA: Versatile Tensor Accelerator (TVM)
 - RoPE: Rotary Positional Embedding

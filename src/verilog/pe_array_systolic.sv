@@ -9,6 +9,10 @@ module pe_array_systolic (
 );
     // Systolic PE: accumulates MAC operations for GEMV
     // y = sum(w_i * x_i) across vector elements
+    //
+    // NOTE: weight/input_act are treated as signed 16-bit fixed-point values.
+    // The dequantizer emits FP16 bit patterns; an FP16-to-fixed-point
+    // conversion stage between them is planned (see docs/ARCHITECTURE.md).
     
     logic signed [31:0] partial_sum;
     

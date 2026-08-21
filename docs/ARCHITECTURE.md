@@ -38,8 +38,10 @@
 
 | Module | Function |
 | --- | --- |
-| **AXI4 Master / DMA** | Fetches quantized weight blocks and activations from DRAM/SRAM. |
-| **Block Unpacker** | Parses incoming 128-bit/256-bit bus words into scale factors and nibbles. |
-| **MAC Array / Systolic Structure** | Performs high-throughput Vector-Matrix multiplications ($y = W \cdot x$). |
-| **Activation & Post-Processing** | Computes RMSNorm, RoPE (Rotary Positional Embedding), and SiLU functions. |
+| **AXI4 Master / DMA** | Fetches quantized weight blocks and activations from DRAM/SRAM. *(Skeleton: port definitions complete, protocol FSM pending.)* |
+| **Block Unpacker** | Parses incoming bus words (parameterized width) into scale factors and nibbles. |
+| **MAC Array / Systolic Structure** | Performs high-throughput Vector-Matrix multiplications ($y = W \cdot x$). *(Single PE implemented; array scaling planned.)* |
+| **Activation & Post-Processing** | Computes RMSNorm, RoPE (Rotary Positional Embedding), and SiLU functions. *(Planned — not yet implemented.)* |
 | **KV Cache Manager** | Manages key-value context storage in RAM during autoregressive generation. |
+
+Implemented modules live in [`src/verilog/`](../src/verilog/); `npu_accelerator` is the top-level integration module.

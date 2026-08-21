@@ -1,0 +1,18 @@
+{
+  "title": "Hardware Accelerator for Q4_0-Quantized LLM Inference",
+  "creators": [
+    {
+      "name": "Jean Machuca",
+      "affiliation": "AI Chip Research Group"
+    }
+  ],
+  "keywords": [
+    "SystemVerilog",
+    "NPU",
+    "GGUF",
+    "Quantization",
+    "Hardware Accelerator"
+  ],
+  "publication_date": "2026-08-21",
+  "description": "Hardware accelerator implementation for Q4_0-quantized large language model inference.\n\nThe system implements a SystemVerilog-based NPU/TPU architecture with:\n- Block-quantized weight decomposition (Q4_0)\n- AXI4 DMA interface for external memory connectivity\n- Systolic array MAC pipeline for GEMV operations\n- KV cache management for transformer autoregressive generation\n\nThe design cleanly separates software GGUF parsing from hardware computation, enabling efficient deployment on FPGA and ASIC platforms."
+}

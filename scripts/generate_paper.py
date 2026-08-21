@@ -48,22 +48,23 @@ def parse_args():
 def extract_model_metadata(model_name):
     """Extract model hyper-parameters from GGUF file or model info."""
     # In production, this would parse the actual GGUF header
+    # Values follow the models' published configs (HuggingFace config.json)
     metadata = {
         "phi-2-q4_0": {
-            "layers": 24,
-            "hidden_size": 512,
-            "num_heads": 8,
-            "head_dim": 64,
+            "layers": 32,
+            "hidden_size": 2560,
+            "num_heads": 32,
+            "head_dim": 80,
             "quant_format": "Q4_0",
-            "params_b": 0.5,
+            "params_b": 2.7,
         },
         "llama-3.2-1b-q4_0": {
-            "layers": 24,
+            "layers": 16,
             "hidden_size": 2048,
-            "num_heads": 16,
-            "head_dim": 128,
+            "num_heads": 32,
+            "head_dim": 64,
             "quant_format": "Q4_0",
-            "params_b": 1.0,
+            "params_b": 1.24,
         },
     }
     return metadata.get(model_name, metadata["phi-2-q4_0"])
@@ -93,7 +94,9 @@ def generate_verilog_documentation(model_info, arch_type):
 
 - Throughput: TBD (FPGA prototype measurement)
 - LUT utilization: TBD (INT8 vs FP16 implementation)
-- Memory bandwidth: {model_info['hidden_size']} × {model_info['num_heads']} × {model_info['layers']} weights
+- Per-layer GEMV dimensions: {model_info['hidden_size']} x {model_info['hidden_size']}
+- Approximate parameter count: {model_info['params_b']}B weights
+- Attention: {model_info['num_heads']} heads x {model_info['head_dim']} head_dim over {model_info['layers']} layers
 
 """
     return doc
@@ -102,8 +105,16 @@ def generate_verilog_documentation(model_info, arch_type):
 def generate_latex_paper(model_name, model_info, arch_type, output_dir):
     """Generate a complete arxiv-ready LaTeX paper."""
     
-    # Determine paper title based on model and architecture
-    title = tex_escape(f"Hardware Acceleration of {model_info['quant_format']}-Quantized {model_name} Inference")
+    # Determine paper title based on model and architecture.
+    # Strip a trailing "-<quant>" suffix from the model name to avoid
+    # redundancy like "Q4_0-Quantized llama-3.2-1b-q4_0".
+    display_name = model_name
+    quant_tag = "-" + model_info['quant_format'].lower()
+    if display_name.lower().endswith(quant_tag):
+        display_name = display_name[: -len(quant_tag)]
+    title = tex_escape(
+        f"Hardware Acceleration of {model_info['quant_format']}-Quantized {display_name} Inference"
+    )
     
     authors = "Jean Machuca, et al."
     
@@ -132,11 +143,11 @@ Our design separates software GGUF parsing from hardware matrix multiplication, 
 
 Key contributions include:
 - A clean software/hardware boundary where the host parses GGUF metadata and dispatches high-level matrix multiplication commands
-- A parameterized dequantization unit supporting multiple GGUF quantization formats
-- A scalable systolic PE array for GEMV operations with configurable precision
-- Integration-ready AXI4 DMA interface for external DRAM/SRAM connectivity
+- A dequantization unit implementing the Q4_0 scale-offset scheme (w = d x (q - 8)) in FP16, structured for extension to other GGUF block formats
+- A MAC pipeline for GEMV operations with a parameterized bus-width block unpacker
+- An AXI4 master interface skeleton for external DRAM/SRAM connectivity
 
-Experimental results on FPGA prototypes demonstrate real-time inference capabilities for 1B-parameter models with latency improvements of XX\\% over software-only execution.""")
+Experimental results on FPGA prototypes are pending; we describe the measurement methodology and target platforms.""")
     lines.append(r"\end{abstract}")
     lines.append("")
     lines.append(r"\section{Introduction}")
@@ -156,11 +167,11 @@ Experimental results on FPGA prototypes demonstrate real-time inference capabili
     lines.append("- Hardware accelerator: Fetches quantized weights from memory, decodes/dequantizes the format, executes low-precision matrix-vector products, and streams results back to RAM")
     lines.append("")
     lines.append("The core datapath consists of:")
-    lines.append("- AXI4 Master DMA for weight and activation fetching")
-    lines.append("- Block unpacker parsing 4-bit packed weights")
+    lines.append("- AXI4 master for weight and activation fetching")
+    lines.append("- Block unpacker parsing packed 4-bit weights (parameterized bus width)")
     lines.append("- Dequantization unit (Q4\\_0 $\\rightarrow$ FP16 via scale $\\times (q_i - 8)$)")
-    lines.append("- Systolic PE array for accumulated matrix multiplication")
-    lines.append("- KV cache manager for autoregressive generation")
+    lines.append("- MAC pipeline for accumulated matrix-vector multiplication")
+    lines.append("- KV cache manager module for autoregressive generation")
     lines.append("")
     lines.append(r"\section{Quantization Format Handling}")
     lines.append("")
@@ -168,15 +179,16 @@ Experimental results on FPGA prototypes demonstrate real-time inference capabili
     lines.append("$w_i = d \\times (q_i - 8)$")
     lines.append("where $d$ is a 16-bit FP16 scale factor and $q_i$ is a 4-bit signed integer packed into 16-byte blocks.")
     lines.append("")
-    lines.append("Our dequantizer module supports multiple formats with parameterized precision scaling.")
+    lines.append("The current dequantizer implements the Q4_0 scheme; the module interface is structured so that additional GGUF block formats (Q8\\_0, Q4\\_K) can be added with the same scale-offset pattern.")
     lines.append("")
     lines.append(r"\section{Implementation}")
     lines.append("")
     lines.append("The SystemVerilog implementation targets FPGA prototyping, with modular components:")
-    lines.append(r"- \texttt{axi4\_master}: AXI4 bus interface for DMA transfers")
-    lines.append(r"- \texttt{block\_unpacker}: Parses packed quantized weight blocks")
+    lines.append(r"- \texttt{npu\_accelerator}: Top-level integration (command decoder, datapath wiring)")
+    lines.append(r"- \texttt{axi4\_master}: AXI4 bus interface skeleton for DMA transfers")
+    lines.append(r"- \texttt{block\_unpacker}: Parses packed quantized weight blocks (parameterized width)")
     lines.append(r"- \texttt{gguf\_q4\_0\_dequantizer}: Converts Q4\_0 format to FP16")
-    lines.append(r"- \texttt{pe\_array\_systolic}: Systolic engine for GEMV operations")
+    lines.append(r"- \texttt{pe\_array\_systolic}: MAC pipeline for GEMV operations")
     lines.append(r"- \texttt{kv\_cache\_manager}: Context storage for transformer inference")
     lines.append("")
     lines.append(r"\section{Results and Evaluation}")
@@ -238,7 +250,11 @@ def main():
     
     # Step 2: Generate Verilog documentation section
     verilog_doc = generate_verilog_documentation(model_info, args.arch)
-    print("[Pipeline] Generated Verilog documentation section")
+    os.makedirs("designs", exist_ok=True)
+    verilog_doc_path = Path("designs") / (args.model + "_verilog_doc.md")
+    with open(verilog_doc_path, 'w') as f:
+        f.write(verilog_doc)
+    print("[Pipeline] Generated Verilog documentation section: " + str(verilog_doc_path))
     
     # Step 3: Generate LaTeX paper
     latex_path = generate_latex_paper(args.model, model_info, args.arch, args.output)
@@ -275,7 +291,7 @@ Output Files:
 Next Steps:
 1. FPGA prototyping and performance measurement
 2. Additional quantization format support (Q4_K, Q5_1, etc.)
-- ASIC implementation feasibility study"""
+3. ASIC implementation feasibility study"""
     
     report_path = Path(args.output) / ("report_" + args.model + ".md")
     with open(report_path, 'w') as f:
