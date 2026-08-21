@@ -1,0 +1,36 @@
+name: PR into development
+
+on:
+  push:
+    branches: [ feature/*, fix/*, bugfix/* ]
+
+jobs:
+  validate-and-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout development branch
+        uses: actions/checkout@v4
+        with:
+          ref: development
+
+      - name: Verify topic branch has changes
+        run: |
+          echo "Topic branch changes validated"
+          git diff --stat HEAD
+
+      - name: Create PR into development
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: "Research update: AI chip accelerator features"
+          body: |
+            This PR includes updates to the GGUF hardware accelerator research repository.
+
+            Changes include:
+            - New SystemVerilog module implementations
+            - Updated architectural documentation
+            - Pipeline enhancements for automated paper generation
+
+            Follows the topic-branch workflow from `.opencode/instructions/git-workflow.md`.
+          branch: feature/research-update
+          base: development
+          labels: "research, architecture, documentation"

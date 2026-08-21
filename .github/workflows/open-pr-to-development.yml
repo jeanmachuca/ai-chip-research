@@ -1,0 +1,24 @@
+name: Open PR to Development
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  add-label-and-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add research label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              labels: ["research", "architecture"]
+            })
+
+      - name: Request review from chip team
+        uses: actions/request-reviewers@v1
+        with:
+          reviewers: "team-chips"
+          mission: "Review AI accelerator architecture changes"

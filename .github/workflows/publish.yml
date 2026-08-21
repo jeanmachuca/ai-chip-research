@@ -1,0 +1,57 @@
+name: Zenodo Publication
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_name:
+        description: "GGUF model name (e.g., llama-3.2-1b-q4_0)"
+        required: true
+        default: "llama-3.2-1b-q4_0"
+      quant_format:
+        description: "Quantization format (Q4_0, Q8_0, etc.)"
+        required: true
+        default: "Q4_0"
+      arch_type:
+        description: "Target architecture (FPGA/ASIC)"
+        required: true
+        default: "FPGA"
+
+jobs:
+  publish-zenodo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Generate zenodo submission package
+        run: |
+          python scripts/generate_paper.py \
+            --model ${{ github.event.inputs.model_name }} \
+            --quant ${{ github.event.inputs.quant_format }} \
+            --arch ${{ github.event.inputs.arch_type }} \
+            --output submissions
+
+      - name: Create zenodo release draft
+        uses: softprops/Release-GitHub-Action@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: v1.0-research-${{ github.event.inputs.model_name }}
+          name: "Research Release: ${{ github.event.inputs.model_name }}"
+          body: |
+            This release contains the hardware accelerator research implementation for ${{ github.event.inputs.model_name }} using ${{ github.event.inputs.quant_format }} quantization on ${{ github.event.inputs.arch_type }} architecture.
+
+            Includes:
+            - SystemVerilog module implementations
+            - LaTeX paper source
+            - Pipeline scripts for automated generation
+            
+            See documentation in docs/ directory for full architecture details.
