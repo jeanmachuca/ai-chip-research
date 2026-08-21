@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout development branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: development
 
@@ -19,7 +19,7 @@ jobs:
           git diff --stat HEAD
 
       - name: Create PR into development
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v8
         with:
           title: "Research update: AI chip accelerator features"
           body: |
