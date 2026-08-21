@@ -5,7 +5,7 @@
 
 \title{Hardware Acceleration of Q4_0-Quantized llama-3.2-1b-q4_0 Inference}
 \author{Jean Machuca, et al.}
-\date{August 21, 2026}
+\date{\today}
 
 \begin{document}
 
@@ -16,7 +16,13 @@ We present a SystemVerilog-based hardware accelerator for efficient inference of
 
 Our design separates software GGUF parsing from hardware matrix multiplication, enabling high-throughput transformer inference on FPGA and ASIC platforms. The accelerator implements a Q4_0 dequantization pipeline with systolic array MAC units, achieving significant energy efficiency improvements over general-purpose GPU implementations.
 
-Key contributions include:\n- A clean software/hardware boundary where the host parses GGUF metadata and dispatches high-level matrix multiplication commands\n- A parameterized dequantization unit supporting multiple GGUF quantization formats\n- A scalable systolic PE array for GEMV operations with configurable precision\n- Integration-ready AXI4 DMA interface for external DRAM/SRAM connectivity\n\nExperimental results on FPGA prototypes demonstrate real-time inference capabilities for 1B-parameter models with latency improvements of XX% over software-only execution.
+Key contributions include:
+- A clean software/hardware boundary where the host parses GGUF metadata and dispatches high-level matrix multiplication commands
+- A parameterized dequantization unit supporting multiple GGUF quantization formats
+- A scalable systolic PE array for GEMV operations with configurable precision
+- Integration-ready AXI4 DMA interface for external DRAM/SRAM connectivity
+
+Experimental results on FPGA prototypes demonstrate real-time inference capabilities for 1B-parameter models with latency improvements of XX% over software-only execution.
 \end{abstract}
 
 \section{Introduction}
@@ -38,7 +44,7 @@ Our accelerator employs a clean software/hardware boundary:
 The core datapath consists of:
 - AXI4 Master DMA for weight and activation fetching
 - Block unpacker parsing 4-bit packed weights
-- Dequantization unit (Q4_0 ightarrow FP16 via scale 	imes (q_i - 8))
+- Dequantization unit (Q4_0 \rightarrow FP16 via scale \times (q_i - 8))
 - Systolic PE array for accumulated matrix multiplication
 - KV cache manager for autoregressive generation
 
