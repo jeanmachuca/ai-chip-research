@@ -19,6 +19,23 @@ import os
 from pathlib import Path
 
 
+def tex_escape(text):
+    """Escape LaTeX special characters for text-mode content."""
+    replacements = {
+        '\\': r'\textbackslash{}',
+        '&': r'\&',
+        '%': r'\%',
+        '$': r'\$',
+        '#': r'\#',
+        '_': r'\_',
+        '{': r'\{',
+        '}': r'\}',
+        '~': r'\textasciitilde{}',
+        '^': r'\textasciicircum{}',
+    }
+    return ''.join(replacements.get(c, c) for c in text)
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="AI Chip Research Paper Pipeline")
     parser.add_argument("--model", required=True, help="GGUF model name (e.g., llama-3.2-1b-q4_0)")
@@ -86,7 +103,7 @@ def generate_latex_paper(model_name, model_info, arch_type, output_dir):
     """Generate a complete arxiv-ready LaTeX paper."""
     
     # Determine paper title based on model and architecture
-    title = f"Hardware Acceleration of {model_info['quant_format']}-Quantized {model_name} Inference"
+    title = tex_escape(f"Hardware Acceleration of {model_info['quant_format']}-Quantized {model_name} Inference")
     
     authors = "Jean Machuca, et al."
     
@@ -108,9 +125,10 @@ def generate_latex_paper(model_name, model_info, arch_type, output_dir):
     lines.append(r"\maketitle")
     lines.append("")
     lines.append(r"\begin{abstract}")
-    lines.append(f"""We present a SystemVerilog-based hardware accelerator for efficient inference of {quant_fmt}-quantized large language models.
+    q = tex_escape(quant_fmt)
+    lines.append(f"""We present a SystemVerilog-based hardware accelerator for efficient inference of {q}-quantized large language models.
 
-Our design separates software GGUF parsing from hardware matrix multiplication, enabling high-throughput transformer inference on FPGA and ASIC platforms. The accelerator implements a Q{quant_fmt[1]}_{quant_fmt[-1]} dequantization pipeline with systolic array MAC units, achieving significant energy efficiency improvements over general-purpose GPU implementations.
+Our design separates software GGUF parsing from hardware matrix multiplication, enabling high-throughput transformer inference on FPGA and ASIC platforms. The accelerator implements a {q} dequantization pipeline with systolic array MAC units, achieving significant energy efficiency improvements over general-purpose GPU implementations.
 
 Key contributions include:
 - A clean software/hardware boundary where the host parses GGUF metadata and dispatches high-level matrix multiplication commands
@@ -118,14 +136,14 @@ Key contributions include:
 - A scalable systolic PE array for GEMV operations with configurable precision
 - Integration-ready AXI4 DMA interface for external DRAM/SRAM connectivity
 
-Experimental results on FPGA prototypes demonstrate real-time inference capabilities for 1B-parameter models with latency improvements of XX% over software-only execution.""")
+Experimental results on FPGA prototypes demonstrate real-time inference capabilities for 1B-parameter models with latency improvements of XX\\% over software-only execution.""")
     lines.append(r"\end{abstract}")
     lines.append("")
     lines.append(r"\section{Introduction}")
     lines.append("")
     lines.append("Large language model (LLM) inference has become a critical workload for edge and datacenter deployment. While software frameworks like GGUF enable efficient quantization and file-format storage, the computational bottleneck shifts to hardware acceleration when deploying these models in resource-constrained or high-throughput environments.")
     lines.append("")
-    lines.append("This work presents a custom NPU/TPU-style accelerator in SystemVerilog specifically designed for GGUF-quantized models. By leveraging block-quantized formats (Q4_0, Q4_K, Q8_0), our design minimizes memory bandwidth requirements while maintaining model accuracy.")
+    lines.append("This work presents a custom NPU/TPU-style accelerator in SystemVerilog specifically designed for GGUF-quantized models. By leveraging block-quantized formats (Q4\\_0, Q4\\_K, Q8\\_0), our design minimizes memory bandwidth requirements while maintaining model accuracy.")
     lines.append("")
     lines.append(r"\section{Related Work}")
     lines.append("")
@@ -140,13 +158,13 @@ Experimental results on FPGA prototypes demonstrate real-time inference capabili
     lines.append("The core datapath consists of:")
     lines.append("- AXI4 Master DMA for weight and activation fetching")
     lines.append("- Block unpacker parsing 4-bit packed weights")
-    lines.append("- Dequantization unit (Q4_0 \\rightarrow FP16 via scale \\times (q_i - 8))")
+    lines.append("- Dequantization unit (Q4\\_0 $\\rightarrow$ FP16 via scale $\\times (q_i - 8)$)")
     lines.append("- Systolic PE array for accumulated matrix multiplication")
     lines.append("- KV cache manager for autoregressive generation")
     lines.append("")
     lines.append(r"\section{Quantization Format Handling}")
     lines.append("")
-    lines.append("GGUF models store weights in block-quantized formats to conserve bandwidth. The Q4_0 format, for example, uses:")
+    lines.append("GGUF models store weights in block-quantized formats to conserve bandwidth. The Q4\\_0 format, for example, uses:")
     lines.append("$w_i = d \\times (q_i - 8)$")
     lines.append("where $d$ is a 16-bit FP16 scale factor and $q_i$ is a 4-bit signed integer packed into 16-byte blocks.")
     lines.append("")
@@ -155,11 +173,11 @@ Experimental results on FPGA prototypes demonstrate real-time inference capabili
     lines.append(r"\section{Implementation}")
     lines.append("")
     lines.append("The SystemVerilog implementation targets FPGA prototyping, with modular components:")
-    lines.append("- axi4_master: AXI4 bus interface for DMA transfers")
-    lines.append("- block_unpacker: Parses packed quantized weight blocks")
-    lines.append("- gguf_q4_0_dequantizer: Converts Q4_0 format to FP16")
-    lines.append("- pe_array_systolic: Systolic engine for GEMV operations")
-    lines.append("- kv_cache_manager: Context storage for transformer inference")
+    lines.append(r"- \texttt{axi4\_master}: AXI4 bus interface for DMA transfers")
+    lines.append(r"- \texttt{block\_unpacker}: Parses packed quantized weight blocks")
+    lines.append(r"- \texttt{gguf\_q4\_0\_dequantizer}: Converts Q4\_0 format to FP16")
+    lines.append(r"- \texttt{pe\_array\_systolic}: Systolic engine for GEMV operations")
+    lines.append(r"- \texttt{kv\_cache\_manager}: Context storage for transformer inference")
     lines.append("")
     lines.append(r"\section{Results and Evaluation}")
     lines.append("")
@@ -167,10 +185,7 @@ Experimental results on FPGA prototypes demonstrate real-time inference capabili
     lines.append("")
     lines.append(r"\section{Conclusion}")
     lines.append("")
-    lines.append("We present a specialized hardware accelerator for GGUF-quantized LLM inference. Future work includes ASIC implementation, support for additional quantization formats (Q5_1, Q_K), and integration with open-source LLM frameworks.")
-    lines.append("")
-    lines.append(r"\bibliographystyle{IEEEtran}")
-    lines.append(r"\bibliography{references}")
+    lines.append("We present a specialized hardware accelerator for GGUF-quantized LLM inference. Future work includes ASIC implementation, support for additional quantization formats (Q5\\_1, Q4\\_K), and integration with open-source LLM frameworks.")
     lines.append("")
     lines.append(r"\end{document}")
     
