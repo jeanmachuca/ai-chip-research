@@ -1,8 +1,10 @@
 ## AHSE PIPELINE EXECUTION STARTED
 
 [INIT Received]
+
 ▼
-[STAGE-100: EMPATHIC_NEED_DISCOVERY]
+
+### [STAGE-100: EMPATHIC_NEED_DISCOVERY]
 
 **Design Thinking Analysis:**
 
@@ -15,7 +17,8 @@
 **Value Proposition**: Enable rapid hardware/software co-design cycles for GGUF-quantized LLM inference, from FPGA prototyping to ASIC feasibility, with automated paper generation for research dissemination.
 
 ▼
-[STAGE-200: 5W2H_STRATEGIC_MATRIX]
+
+### [STAGE-200: 5W2H_STRATEGIC_MATRIX]
 
 **5W2H Matrix:**
 
@@ -30,14 +33,16 @@
 | **HOW MUCH** | FPGA prototyping budget: $500-2000 (Xilinx/Kria boards). ASIC NRE: Not applicable for research-phase silicon. Paper generation: $0 (open-source tools). Compute hours: ~200 FPGA emulation hours. Time investment: ~160 hours total research/implementation. |
 
 ▼
-[STAGE-300: VISION_MISSION_SYNTHESIS]
+
+### [STAGE-300: VISION_MISSION_SYNTHESIS]
 
 **Vision Statement**: Empower AI researchers to seamlessly transition from GGUF model quantization to hardware acceleration, with automated architectural documentation and executable SystemVerilog pipelines, enabling rapid iteration from prototype to published research artifact.
 
 **Mission Statement**: Scaffold the `jeanmachuca/ai-chip-research` repository with a complete research pipeline: SystemVerilog hardware accelerator modules, GGUF quantization format handling (Q4_0/Q8_0), FPGA prototyping roadmap (Phase 1→3), and automated arxiv/zenodo paper generation—delivering reproducible research artifacts from a single model specification.
 
 ▼
-[STAGE-400: HW_SW_ARCHITECTURAL_IDEATION]
+
+### [STAGE-400: HW_SW_ARCHITECTURAL_IDEATION]
 
 **Hardware Architecture**:
 
@@ -61,7 +66,8 @@
 * **Telemetry Payload Structure**: Layer index, quantization format, MAC count, cycles per inference, FPGA resource utilization (LUTs, DSPs, BRAMs).
 
 ▼
-[STAGE-500: LEAN_MVP_HYPOTHESIS_MAPPING]
+
+### [STAGE-500: LEAN_MVP_HYPOTHESIS_MAPPING]
 
 **3 Riskiest Assumptions**:
 
@@ -81,7 +87,8 @@
 * **Deliverables**: 1) Working FPGA prototype with 1B-parameter Q8_0 inference; 2) Automated paper generation (arxiv-ready LaTeX); 3) zenodo submission package; 4) SystemVerilog module repository (src/verilog/).
 
 ▼
-[STAGE-600: BUILD_MEASURE_LEARN_SIMULATION]
+
+### [STAGE-600: BUILD_MEASURE_LEARN_SIMULATION]
 
 **Simulation Run 1: Stress Test Against Constraints**
 
@@ -115,7 +122,8 @@
 **Final Determination after 3 Simulations**: All hypotheses pass → **PERSEVERE** across all three runs. No BURNOUT-000 trigger.
 
 ▼
-[STAGE-700: FINAL_PRODUCT_BLUEPRINT]
+
+### [STAGE-700: FINAL_PRODUCT_BLUEPRINT]
 
 **Executive Summary**:
 
@@ -164,6 +172,7 @@ The `jeanmachuca/ai-chip-research` repository provides a complete research progr
 |  |   Accumulators → Quantization/Activation (RMSNorm)  ||| 
 |  +-----------------------------------------------------+|| 
 +--------------------------------------------------------+
+```
 
 **5W2H Summary**:
 
