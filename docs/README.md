@@ -61,3 +61,9 @@ python3 scripts/generate_paper.py --model llama-3.2-1b-q4_0 --quant Q4_0 --arch 
 - VTA: Versatile Tensor Accelerator (TVM)
 - RoPE: Rotary Positional Embedding
 - RMSNorm: Root Mean Square Layer Normalization
+
+## Documentation
+
+- **AHSE_STAGE_DOSSIER.md**: Complete AHSE (Autonomous Hardware & Software Product Synthesis Engine) pipeline output documenting the full architectural synthesis from requirements to implementation
+- **ARCHITECTURE.md**: Detailed SystemVerilog module architecture and interface specifications
+- **QUANTIZATION.md**: GGUF quantization format handling (Q4_0, Q8_0) and dequantizer implementation
