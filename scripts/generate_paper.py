@@ -179,7 +179,7 @@ Experimental results on FPGA prototypes are pending; we describe the measurement
     lines.append("$w_i = d \\times (q_i - 8)$")
     lines.append("where $d$ is a 16-bit FP16 scale factor and $q_i$ is a 4-bit signed integer packed into 16-byte blocks.")
     lines.append("")
-    lines.append("The current dequantizer implements the Q4_0 scheme; the module interface is structured so that additional GGUF block formats (Q8\\_0, Q4\\_K) can be added with the same scale-offset pattern.")
+    lines.append("The current dequantizer implements the Q4\\_0 scheme; the module interface is structured so that additional GGUF block formats (Q8\\_0, Q4\\_K) can be added with the same scale-offset pattern.")
     lines.append("")
     lines.append(r"\section{Implementation}")
     lines.append("")
