@@ -51,7 +51,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            texlive-latex-base texlive-latex-recommended latexmk
+            texlive-latex-base texlive-latex-recommended \
+            texlive-fonts-recommended latexmk
 
       - name: Build PDF
         run: |
