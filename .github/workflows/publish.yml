@@ -16,6 +16,9 @@ on:
         required: true
         default: "FPGA"
 
+permissions:
+  contents: write
+
 jobs:
   publish-zenodo:
     runs-on: ubuntu-latest
@@ -31,6 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install --user pyyaml
 
       - name: Generate zenodo submission package
         run: |
@@ -40,18 +44,54 @@ jobs:
             --arch ${{ github.event.inputs.arch_type }} \
             --output submissions
 
-      - name: Create zenodo release draft
+      - name: Install LaTeX toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-base texlive-latex-recommended \
+            texlive-fonts-recommended latexmk
+
+      - name: Build PDF
+        run: |
+          cd submissions
+          TEXINPUTS=.:../tex: latexmk -pdf -interaction=nonstopmode -halt-on-error paper_*.tex
+          latexmk -c
+
+      - name: Upload submission package artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: zenodo-submission-${{ github.event.inputs.model_name }}-${{ github.run_number }}
+          path: |
+            submissions/*.tex
+            submissions/*.md
+            submissions/*.pdf
+            submissions/*.json
+          retention-days: 90
+
+      - name: Create release with submission package
         uses: softprops/action-gh-release@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: v1.0-research-${{ github.event.inputs.model_name }}
-          name: "Research Release: ${{ github.event.inputs.model_name }}"
+          tag_name: research-${{ github.event.inputs.model_name }}-v${{ github.run_number }}
+          name: "Research Release: ${{ github.event.inputs.model_name }} (${{ github.event.inputs.quant_format }} on ${{ github.event.inputs.arch_type }})"
+          draft: true
           body: |
-            This release contains the hardware accelerator research implementation for ${{ github.event.inputs.model_name }} using ${{ github.event.inputs.quant_format }} quantization on ${{ github.event.inputs.arch_type }} architecture.
+            Hardware accelerator research package for `${{ github.event.inputs.model_name }}` using **${{ github.event.inputs.quant_format }}** quantization on **${{ github.event.inputs.arch_type }}** architecture.
 
-            Includes:
-            - SystemVerilog module implementations
-            - LaTeX paper source
-            - Pipeline scripts for automated generation
-            
-            See documentation in docs/ directory for full architecture details.
+            ## Attachments
+            - `paper_${{ github.event.inputs.model_name }}.pdf` — compiled IEEE conference paper
+            - `paper_${{ github.event.inputs.model_name }}.tex` — LaTeX source
+            - `report_${{ github.event.inputs.model_name }}.md` — research summary report
+            - `zenodo_${{ github.event.inputs.model_name }}.json` — Zenodo deposition metadata
+
+            ## Contents
+            - SystemVerilog module implementations (`src/verilog/`)
+            - Q4_0 dequantization datapath and systolic PE array design
+            - Pipeline scripts for automated paper generation
+
+            See `docs/` for full architecture details. Release created as draft; review and publish to finalize.
+          files: |
+            submissions/paper_*.pdf
+            submissions/paper_*.tex
+            submissions/report_*.md
+            submissions/zenodo_*.json

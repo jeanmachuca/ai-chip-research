@@ -246,7 +246,10 @@ def main():
     
     # Step 4: Generate zenodo submission package
     zenodo_package = generate_zenodo_submission(latex_path, model_info, args.arch)
-    print("[Pipeline] Zenodo submission package prepared")
+    zenodo_path = Path(args.output) / ("zenodo_" + args.model + ".json")
+    with open(zenodo_path, 'w') as f:
+        json.dump(zenodo_package, f, indent=2)
+    print("[Pipeline] Zenodo submission package written: " + str(zenodo_path))
     
     # Step 5: Create summary report
     report = f"""Research Report: AI Chip Accelerator for GGUF Inference
