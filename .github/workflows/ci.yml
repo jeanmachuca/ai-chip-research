@@ -2,10 +2,23 @@ name: CI - Paper Generation Pipeline
 
 on:
   push:
-    branches: [ development ]
+    branches: [ main, development ]
   pull_request:
     branches: [ development ]
   workflow_dispatch:
+    inputs:
+      model_name:
+        description: "GGUF model name (e.g., llama-3.2-1b-q4_0)"
+        required: false
+        default: "llama-3.2-1b-q4_0"
+      quant_format:
+        description: "Quantization format (Q4_0, Q8_0, etc.)"
+        required: false
+        default: "Q4_0"
+      arch_type:
+        description: "Target architecture (FPGA/ASIC)"
+        required: false
+        default: "FPGA"
 
 jobs:
   generate-paper:
@@ -29,15 +42,15 @@ jobs:
       - name: Generate paper
         run: |
           python scripts/generate_paper.py \
-            --model ${{ github.event.model_name || 'llama-3.2-1b-q4_0'}} \
-            --quant ${{ github.event.quant_format || 'Q4_0'}} \
-            --arch ${{ github.event.arch_type || 'FPGA'}} \
+            --model ${{ github.event.inputs.model_name || 'llama-3.2-1b-q4_0' }} \
+            --quant ${{ github.event.inputs.quant_format || 'Q4_0' }} \
+            --arch ${{ github.event.inputs.arch_type || 'FPGA' }} \
             --output papers
 
       - name: Upload paper artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: paper-${{ matrix.model }}-${{ matrix.quant }}
+          name: paper-${{ github.event.inputs.model_name || 'llama-3.2-1b-q4_0' }}-${{ github.event.inputs.quant_format || 'Q4_0' }}
           path: papers/*
           retention-days: 30
 
