@@ -51,12 +51,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            texlive-latex-base texlive-latex-recommended texlive-publishers latexmk
+            texlive-latex-base texlive-latex-recommended latexmk
 
       - name: Build PDF
         run: |
           cd papers
-          latexmk -pdf -interaction=nonstopmode -halt-on-error paper_*.tex
+          TEXINPUTS=.:../tex: latexmk -pdf -interaction=nonstopmode -halt-on-error paper_*.tex
 
       - name: Clean auxiliary files
         run: |
